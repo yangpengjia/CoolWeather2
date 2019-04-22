@@ -1,0 +1,88 @@
+package com.hnkjxy.util;
+
+import android.text.TextUtils;
+
+import com.google.gson.Gson;
+import com.hnkjxy.db.City;
+import com.hnkjxy.db.County;
+import com.hnkjxy.db.Province;
+import com.hnkjxy.gson.Weather;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+public class Utility {
+    public static boolean handleProvinceResponse(String response){
+        if (!TextUtils.isEmpty(response)){
+            try {
+                JSONArray allProvince = new JSONArray(response);
+                for (int i=0;i<allProvince.length();i++){
+                    JSONObject provinceObject = allProvince.getJSONObject(i);
+                    Province province = new Province();
+                    province.setProvinceName(provinceObject.getString("name"));
+                    province.setProvinceCode(provinceObject.getInt("id"));
+                    province.save();
+                }
+                return true;
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+        }
+        return false;
+    }
+    public  static boolean handleCityReponse(String response,int provinceId){
+        if (!TextUtils.isEmpty(response)){
+            try {
+                JSONArray allCities = new JSONArray(response);
+                for (int i=0;i<allCities.length();i++){
+                    JSONObject cityObject = allCities.getJSONObject(i);
+                    City city = new City();
+                    city.setCityName(cityObject.getString("name"));
+                    city.setCityCode(cityObject.getInt("id"));
+                    city.setProviceId(provinceId);
+                    city.save();
+                }
+                return true;
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+        }
+        return false;
+    }
+    public static boolean handleCountyReponse(String response,int cityId){
+        if (!TextUtils.isEmpty(response)){
+            try {
+                JSONArray countyArray = new JSONArray(response);
+                for (int i=0;i<countyArray.length();i++){
+                    JSONObject countyObject = countyArray.getJSONObject(i);
+                    County county = new County();
+                    county.setCountyName(countyObject.getString("name"));
+                    county.setWeatherId(countyObject.getString("weather_id"));
+                    county.setCityId(cityId);
+                    county.save();
+                }
+                return true;
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        return false;
+    }
+    /**
+     * 将返回的json数据解析成Weather实体类
+     */
+    public static Weather handleWeatherResponse(String response){
+        try {
+            JSONObject jsonObject = new JSONObject(response);
+            JSONArray jsonArray = jsonObject.getJSONArray("HeWather");
+            String weatherContent = jsonArray.getJSONObject(0).toString();
+            return new Gson().fromJson(weatherContent,Weather.class);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+}
